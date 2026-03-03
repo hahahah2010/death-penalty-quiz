@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Death Penalty Dialogue - Interactive Quiz</title>
+    <style>
+        :root {
+            --primary-red: #cc0000;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-light: #e0e0e0;
+            --accent-gold: #d4af37;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #000, transparent);
+            border-bottom: 2px solid var(--primary-red);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: var(--primary-red);
+            text-transform: uppercase;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        /* 題目顯示區 */
+        .quiz-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            border: 1px solid #333;
+        }
+
+        #question-display {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 狀態提示 */
+        #status-msg {
+            height: 30px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        /* 搶答按鈕區 */
+        .buzzer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .buzzer-btn {
+            aspect-ratio: 1 / 1;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buzzer-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .btn-a { background-color: #2c3e50; } /* Team A */
+        .btn-b { background-color: #8e44ad; } /* Team B */
+        .btn-c { background-color: #27ae60; } /* Team C */
+        .btn-d { background-color: #d35400; } /* Team D */
+
+        .disabled {
+            filter: grayscale(0.8) opacity(0.5);
+            pointer-events: none;
+        }
+
+        /* 積分與控制 */
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            background: #222;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .score-box span {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        .nav-btn {
+            background: none;
+            border: 1px solid var(--text-light);
+            color: var(--text-light);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Justice Debate: The Choice</h1>
+    </header>
+
+    <div class="container">
+        <div class="quiz-card">
+            <div id="status-msg">READY TO BUZZ?</div>
+            <div id="question-display">
+                Click "Next" to reveal the first question about the Death Penalty in Taiwan and Japan.
+            </div>
+        </div>
+
+        <div class="buzzer-grid" id="buzzer-area">
+            <button class="buzzer-btn btn-a" onclick="handleBuzz('Group 1')">Group 1</button>
+            <button class="buzzer-btn btn-b" onclick="handleBuzz('Group 2')">Group 2</button>
+            <button class="buzzer-btn btn-c" onclick="handleBuzz('Group 3')">Group 3</button>
+            <button class="buzzer-btn btn-d" onclick="handleBuzz('Group 4')">Group 4</button>
+        </div>
+
+        <div class="scoreboard">
+            <div class="score-box"><span>G1</span><div class="score-val" id="score-Group 1">0</div></div>
+            <div class="score-box"><span>G2</span><div class="score-val" id="score-Group 2">0</div></div>
+            <div class="score-box"><span>G3</span><div class="score-val" id="score-Group 3">0</div></div>
+            <div class="score-box"><span>G4</span><div class="score-val" id="score-Group 4">0</div></div>
+        </div>
+
+        <button class="nav-btn" onclick="resetRound()">Next / Reset Round</button>
+    </div>
+
+    <script>
+        let scores = {"Group 1": 0, "Group 2": 0, "Group 3": 0, "Group 4": 0};
+        let isActive = false;
+        
+        // 範例題目庫
+        const questions = [
+            "Q1: Does Japan still carry out the death penalty in 2024?",
+            "Q2: In Taiwan, which method is used for execution?",
+            "Q3: What is the public support rate for the death penalty in Japan? (Approx %)"
+        ];
+        let qIndex = 0;
+
+        function handleBuzz(team) {
+            if (!isActive) return;
+            
+            isActive = false;
+            document.getElementById('status-msg').innerText = "!!! " + team + " BUZZED !!!";
+            document.getElementById('status-msg').style.color = "#00ff00";
+            
+            // 增加積分
+            scores[team] += 10;
+            document.getElementById('score-' + team).innerText = scores[team];
+            
+            // 讓其他按鈕變暗
+            document.getElementById('buzzer-area').classList.add('disabled');
+        }
+
+        function resetRound() {
+            isActive = true;
+            document.getElementById('buzzer-area').classList.remove('disabled');
+            document.getElementById('status-msg').innerText = "FASTEST FINGER FIRST!";
+            document.getElementById('status-msg').style.color = "var(--accent-gold)";
+            
+            // 切換題目
+            document.getElementById('question-display').innerText = questions[qIndex % questions.length];
+            qIndex++;
+        }
+    </script>
+</body>
+</html>
